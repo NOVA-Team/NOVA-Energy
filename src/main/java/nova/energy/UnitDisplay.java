@@ -1,7 +1,37 @@
+/*
+ * Copyright (c) 2015 NOVA, All rights reserved.
+ * This library is free software, licensed under GNU Lesser General Public License version 3
+ *
+ * This file is part of NOVA.
+ *
+ * NOVA is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * NOVA is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with NOVA.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package nova.energy;
 
+import nova.core.loader.Mod;
+import nova.core.util.id.Identifiable;
+import nova.core.util.id.Identifier;
+import nova.core.util.id.StringIdentifier;
+import nova.internal.core.launch.ModLoader;
+
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An easy way to display information on electricity for the client.
@@ -126,29 +156,35 @@ public class UnitDisplay {
 	 * Universal Electricity's units are in KILOJOULES, KILOWATTS and KILOVOLTS. Try to make your
 	 * energy ratio as close to real life as possible.
 	 */
-	public static class Unit {
-		public static final Unit AMPERE = new Unit("Amp", "I");
-		public static final Unit AMP_HOUR = new Unit("Amp Hour", "Ah");
-		public static final Unit VOLTAGE = new Unit("Volt", "V");
-		public static final Unit WATT = new Unit("Watt", "W");
-		public static final Unit WATT_HOUR = new Unit("Watt Hour", "Wh");
-		public static final Unit RESISTANCE = new Unit("Ohm", "R");
-		public static final Unit CONDUCTANCE = new Unit("Siemen", "S");
-		public static final Unit JOULES = new Unit("Joule", "J");
-		public static final Unit LITER = new Unit("Liter", "L");
-		public static final Unit NEWTON_METER = new Unit("Newton Meter", "Nm");
+	public static class Unit implements Identifiable {
+		private static final Map<Identifier, Unit> UNIT_MAP = new HashMap<>();
 
-		public static final Unit REDFLUX = new Unit("Redstone-Flux", "Rf").setPlural("Redstone-Flux");
-		public static final Unit MINECRAFT_JOULES = new Unit("Minecraft-Joule", "Mj");
-		public static final Unit ELECTRICAL_UNITS = new Unit("Electrical-Unit", "Eu");
+		public static final Unit AMPERE = new Unit("nova:ampere", "Amp", "I");
+		public static final Unit AMP_HOUR = new Unit("nova:amp_hour", "Amp Hour", "Ah");
+		public static final Unit VOLTAGE = new Unit("nova:voltage", "Volt", "V");
+		public static final Unit WATT = new Unit("nova:watt", "Watt", "W");
+		public static final Unit WATT_HOUR = new Unit("nova:watt_hour", "Watt Hour", "Wh");
+		public static final Unit RESISTANCE = new Unit("nova:resistance", "Ohm", "R");
+		public static final Unit CONDUCTANCE = new Unit("nova:conductance", "Siemen", "S");
+		public static final Unit JOULE = new Unit("nova:joule", "Joule", "J");
+		public static final Unit LITER = new Unit("nova:liter", "Liter", "L");
+		public static final Unit NEWTON_METER = new Unit("nova:newton_meter", "Newton Meter", "Nm");
 
+		public static final Unit REDFLUX = new Unit("forge:redstone_flux", "Redstone-Flux", "RF").setPlural("Redstone-Flux");
+		public static final Unit MINECRAFT_JOULES = new Unit("buildcraft:minecraft_joule", "Minecraft-Joule", "McJ"); // MJ is confusing
+		public static final Unit ELECTRICAL_UNITS = new Unit("ic2:electrical_unit", "Electrical-Unit", "EU");
+
+		private final String id;
 		public final String name;
 		public final String symbol;
 		private String plural = null;
 
-		private Unit(String name, String symbol) {
+		private Unit(String id, String name, String symbol) {
+			this.id = id;
 			this.name = name;
 			this.symbol = symbol;
+
+			UNIT_MAP.put(getID(), this);
 		}
 
 		private Unit setPlural(String plural) {
@@ -158,6 +194,63 @@ public class UnitDisplay {
 
 		public String getPlural() {
 			return this.plural == null ? this.name + "s" : this.plural;
+		}
+
+		@Override
+		public Identifier getID() {
+			return new StringIdentifier(id);
+		}
+
+		public static Set<Unit> getUnitsForMod(String modId) {
+			return UNIT_MAP.values().stream().filter((e) -> {
+				String id = e.getID().asString();
+				if (id.contains(":")) {
+					return id.substring(0, id.lastIndexOf(':')).startsWith(modId);
+				} else {
+					return modId == null || modId.isEmpty();
+				}
+			}).collect(Collectors.toSet());
+		}
+
+		public static Optional<Unit> getUnit(String id) {
+			return Optional.ofNullable(UNIT_MAP.get(new StringIdentifier(id)));
+		}
+
+		public static Unit getOrCreateUnit(String id, String name, String unit) {
+			StringIdentifier idRaw = new StringIdentifier(id);
+			StringIdentifier idNamespaced = new StringIdentifier(addPrefix(id));
+			if (UNIT_MAP.containsKey(idNamespaced)) return UNIT_MAP.get(idNamespaced);
+			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
+
+			Unit unitObj = new Unit(idNamespaced.asString(), name, unit);
+			return unitObj;
+		}
+
+		public static Unit getOrCreateUnit(String id, String name, String unit, String plural) {
+			StringIdentifier idRaw = new StringIdentifier(id);
+			StringIdentifier idNamespaced = new StringIdentifier(addPrefix(id));
+			if (UNIT_MAP.containsKey(idNamespaced)) return UNIT_MAP.get(idNamespaced);
+			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
+
+			Unit unitObj = new Unit(idNamespaced.asString(), name, unit);
+			return unitObj.setPlural(plural);
+		}
+
+		private static String addPrefix(String id) {
+			int prefixEnd = id.lastIndexOf(':');
+			String oldPrefix = prefixEnd < 0 ? "" : id.substring(0, prefixEnd);
+			String newPrefix = null;
+			Optional<Mod> mod = ModLoader.<Mod>instance().activeMod();
+
+			if (mod.isPresent()) {
+				newPrefix = mod.get().id();
+			}
+
+			if (newPrefix != null && oldPrefix.isEmpty()) {
+				id = newPrefix + ':' + id;
+			}
+
+			return id;
 		}
 	}
 
