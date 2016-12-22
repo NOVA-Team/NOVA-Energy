@@ -1,40 +1,77 @@
-package nova.energy;
+/*
+ * Copyright (c) 2015 NOVA, All rights reserved.
+ * This library is free software, licensed under GNU Lesser General Public License version 3
+ *
+ * This file is part of NOVA.
+ *
+ * NOVA is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * NOVA is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with NOVA.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-import java.util.LinkedList;
-import java.util.List;
+package nova.energy;
 
 /**
  * An easy way to display information on electricity for the client.
+ *
  * @author Calclavia
  */
 public class UnitDisplay {
-	public Unit unit;
-	public double value;
-	public boolean useSymbol = false;
-	public int decimalPlaces = 2;
-	public boolean isSimple = false;
+	public final Unit unit;
+	public final double value;
+	public final boolean useSymbol;
+	public final int decimalPlaces;
+	public final boolean isSimple;
 
-	public UnitDisplay(Unit unit, double value, boolean simple) {
+	public UnitDisplay(Unit unit, double value, boolean useSymbol, int decimalPlaces, boolean simple) {
 		this.unit = unit;
 		this.value = value;
+		this.useSymbol = useSymbol;
+		this.decimalPlaces = decimalPlaces;
+		this.isSimple = simple;
+	}
+
+	public UnitDisplay(Unit unit, double value, boolean useSymbol, boolean simple) {
+		this(unit, value, useSymbol, 2, simple);
+	}
+
+	public UnitDisplay(Unit unit, double value, int decimalPlaces, boolean simple) {
+		this(unit, value, false, decimalPlaces, simple);
+	}
+
+	public UnitDisplay(Unit unit, double value, boolean useSymbol, int decimalPlaces) {
+		this(unit, value, useSymbol, decimalPlaces, false);
+	}
+
+	public UnitDisplay(Unit unit, double value, int decimalPlaces) {
+		this(unit, value, false, decimalPlaces, false);
+	}
+
+	public UnitDisplay(Unit unit, double value, boolean simple) {
+		this(unit, value, false, 2, simple);
 	}
 
 	public UnitDisplay(Unit unit, double value) {
-		this(unit, value, false);
-	}
-
-	@Deprecated
-	public UnitDisplay(double value, Unit unit) {
-		this(unit, value);
+		this(unit, value, false, 2, false);
 	}
 
 	/**
 	 * Rounds a number to a specific number place places
+	 *
 	 * @param d - the number
 	 * @return The rounded number
 	 */
 	public static double roundDecimals(double d, int decimalPlaces) {
-		int j = (int) (d * Math.pow(10, decimalPlaces));
+		long j = Math.round(d * Math.pow(10, decimalPlaces));
 		return j / Math.pow(10, decimalPlaces);
 	}
 
@@ -43,13 +80,15 @@ public class UnitDisplay {
 	}
 
 	public UnitDisplay multiply(double value) {
-		this.value *= value;
-		return this;
+		return new UnitDisplay(unit, value * this.value);
 	}
 
 	public UnitDisplay simple() {
-		isSimple = true;
-		return this;
+		return (isSimple ? this : new UnitDisplay(unit, value, true));
+	}
+
+	public UnitDisplay notSimple() {
+		return (!isSimple ? this : new UnitDisplay(unit, value, false));
 	}
 
 	public UnitDisplay symbol() {
@@ -57,19 +96,18 @@ public class UnitDisplay {
 	}
 
 	public UnitDisplay symbol(boolean useSymbol) {
-		this.useSymbol = useSymbol;
-		return this;
+		return (this.useSymbol ^ useSymbol ? new UnitDisplay(unit, value, isSimple, decimalPlaces, useSymbol) : this);
 	}
 
 	public UnitDisplay decimal(int decimalPlaces) {
-		this.decimalPlaces = decimalPlaces;
-		return this;
+		return (this.decimalPlaces == decimalPlaces ? this : new UnitDisplay(unit, value, isSimple, decimalPlaces, useSymbol));
 	}
 
 	@Override
 	public String toString() {
 		String unitName = unit.name;
 		String prefix = "";
+		double value = this.value;
 
 		if (isSimple) {
 			if (value > 1) {
@@ -101,17 +139,17 @@ public class UnitDisplay {
 		if (value == 0) {
 			return value + " " + unitName;
 		} else {
-			for (int i = 0; i < UnitPrefix.unitPrefixes.size(); i++) {
-				UnitPrefix lowerMeasure = UnitPrefix.unitPrefixes.get(i);
+			for (int i = 0; i < Unit.Prefix.getPrefixes().size(); i++) {
+				Unit.Prefix lowerMeasure = Unit.Prefix.getPrefixes().get(i);
 
 				if (lowerMeasure.isBellow(value) && i == 0) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
 				}
-				if (i + 1 >= UnitPrefix.unitPrefixes.size()) {
+				if (i + 1 >= Unit.Prefix.getPrefixes().size()) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
 				}
 
-				UnitPrefix upperMeasure = UnitPrefix.unitPrefixes.get(i + 1);
+				Unit.Prefix upperMeasure = Unit.Prefix.getPrefixes().get(i + 1);
 
 				if ((lowerMeasure.isAbove(value) && upperMeasure.isBellow(value)) || lowerMeasure.value == value) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
@@ -120,111 +158,5 @@ public class UnitDisplay {
 		}
 
 		return prefix + roundDecimals(value, decimalPlaces) + " " + unitName;
-	}
-
-	/**
-	 * Universal Electricity's units are in KILOJOULES, KILOWATTS and KILOVOLTS. Try to make your
-	 * energy ratio as close to real life as possible.
-	 */
-	public static class Unit {
-		public static final Unit AMPERE = new Unit("Amp", "I");
-		public static final Unit AMP_HOUR = new Unit("Amp Hour", "Ah");
-		public static final Unit VOLTAGE = new Unit("Volt", "V");
-		public static final Unit WATT = new Unit("Watt", "W");
-		public static final Unit WATT_HOUR = new Unit("Watt Hour", "Wh");
-		public static final Unit RESISTANCE = new Unit("Ohm", "R");
-		public static final Unit CONDUCTANCE = new Unit("Siemen", "S");
-		public static final Unit JOULES = new Unit("Joule", "J");
-		public static final Unit LITER = new Unit("Liter", "L");
-		public static final Unit NEWTON_METER = new Unit("Newton Meter", "Nm");
-
-		public static final Unit REDFLUX = new Unit("Redstone-Flux", "Rf").setPlural("Redstone-Flux");
-		public static final Unit MINECRAFT_JOULES = new Unit("Minecraft-Joule", "Mj");
-		public static final Unit ELECTRICAL_UNITS = new Unit("Electrical-Unit", "Eu");
-
-		public final String name;
-		public final String symbol;
-		private String plural = null;
-
-		private Unit(String name, String symbol) {
-			this.name = name;
-			this.symbol = symbol;
-		}
-
-		private Unit setPlural(String plural) {
-			this.plural = plural;
-			return this;
-		}
-
-		public String getPlural() {
-			return this.plural == null ? this.name + "s" : this.plural;
-		}
-	}
-
-	/**
-	 * Metric system of measurement.
-	 */
-	public static class UnitPrefix {
-		public static final List<UnitPrefix> unitPrefixes = new LinkedList();
-
-		public static final UnitPrefix MICRO = new UnitPrefix("Micro", "u", 0.000001);
-		public static final UnitPrefix MILLI = new UnitPrefix("Milli", "m", 0.001);
-		public static final UnitPrefix BASE = new UnitPrefix("", "", 1);
-		public static final UnitPrefix KILO = new UnitPrefix("Kilo", "k", 1000);
-		public static final UnitPrefix MEGA = new UnitPrefix("Mega", "M", 1000000);
-		public static final UnitPrefix GIGA = new UnitPrefix("Giga", "G", 1000000000);
-		public static final UnitPrefix TERA = new UnitPrefix("Tera", "T", 1000000000000d);
-		public static final UnitPrefix PETA = new UnitPrefix("Peta", "P", 1000000000000000d);
-		public static final UnitPrefix EXA = new UnitPrefix("Exa", "E", 1000000000000000000d);
-		public static final UnitPrefix ZETTA = new UnitPrefix("Zetta", "Z", 1000000000000000000000d);
-		public static final UnitPrefix YOTTA = new UnitPrefix("Yotta", "Y", 1000000000000000000000000d);
-		/**
-		 * long name for the unit
-		 */
-		public final String name;
-		/**
-		 * short unit version of the unit
-		 */
-		public final String symbol;
-		/**
-		 * Point by which a number is consider to be of this unit
-		 */
-		public final double value;
-
-		private UnitPrefix(String name, String symbol, double value) {
-			this.name = name;
-			this.symbol = symbol;
-			this.value = value;
-			unitPrefixes.add(this);
-		}
-
-		public String getName(boolean getShort) {
-			if (getShort) {
-				return symbol;
-			} else {
-				return name;
-			}
-		}
-
-		/**
-		 * Divides the value by the unit value start
-		 */
-		public double process(double value) {
-			return value / this.value;
-		}
-
-		/**
-		 * Checks if a value is above the unit value start
-		 */
-		public boolean isAbove(double value) {
-			return value > this.value;
-		}
-
-		/**
-		 * Checks if a value is lower than the unit value start
-		 */
-		public boolean isBellow(double value) {
-			return value < this.value;
-		}
 	}
 }
