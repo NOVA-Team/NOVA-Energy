@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with NOVA.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package nova.energy;
 
 import nova.energy.UnitDisplay.Unit;

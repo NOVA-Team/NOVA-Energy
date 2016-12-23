@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with NOVA.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package nova.energy;
 
 import nova.core.loader.Mod;
@@ -180,7 +181,7 @@ public class UnitDisplay {
 		private String plural = null;
 
 		private Unit(String id, String name, String symbol) {
-			this.id = id;
+			this.id = Identifiable.addPrefix(id, false);
 			this.name = name;
 			this.symbol = symbol;
 
@@ -218,7 +219,7 @@ public class UnitDisplay {
 
 		public static Unit getOrCreateUnit(String id, String name, String unit) {
 			StringIdentifier idRaw = new StringIdentifier(id);
-			StringIdentifier idNamespaced = new StringIdentifier(addPrefix(id));
+			StringIdentifier idNamespaced = new StringIdentifier(Identifiable.addPrefix(id, false));
 			if (UNIT_MAP.containsKey(idNamespaced)) return UNIT_MAP.get(idNamespaced);
 			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
 
@@ -228,29 +229,12 @@ public class UnitDisplay {
 
 		public static Unit getOrCreateUnit(String id, String name, String unit, String plural) {
 			StringIdentifier idRaw = new StringIdentifier(id);
-			StringIdentifier idNamespaced = new StringIdentifier(addPrefix(id));
+			StringIdentifier idNamespaced = new StringIdentifier(Identifiable.addPrefix(id, false));
 			if (UNIT_MAP.containsKey(idNamespaced)) return UNIT_MAP.get(idNamespaced);
 			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
 
 			Unit unitObj = new Unit(idNamespaced.asString(), name, unit);
 			return unitObj.setPlural(plural);
-		}
-
-		private static String addPrefix(String id) {
-			int prefixEnd = id.lastIndexOf(':');
-			String oldPrefix = prefixEnd < 0 ? "" : id.substring(0, prefixEnd);
-			String newPrefix = null;
-			Optional<Mod> mod = ModLoader.<Mod>instance().activeMod();
-
-			if (mod.isPresent()) {
-				newPrefix = mod.get().id();
-			}
-
-			if (newPrefix != null && oldPrefix.isEmpty()) {
-				id = newPrefix + ':' + id;
-			}
-
-			return id;
 		}
 	}
 
