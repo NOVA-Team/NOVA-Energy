@@ -36,36 +36,56 @@ import java.util.stream.Collectors;
 
 /**
  * An easy way to display information on electricity for the client.
+ *
  * @author Calclavia
  */
 public class UnitDisplay {
-	public Unit unit;
-	public double value;
-	public boolean useSymbol = false;
-	public int decimalPlaces = 2;
-	public boolean isSimple = false;
+	public final Unit unit;
+	public final double value;
+	public final boolean useSymbol;
+	public final int decimalPlaces;
+	public final boolean isSimple;
 
-	public UnitDisplay(Unit unit, double value, boolean simple) {
+	public UnitDisplay(Unit unit, double value, boolean useSymbol, int decimalPlaces, boolean simple) {
 		this.unit = unit;
 		this.value = value;
+		this.useSymbol = useSymbol;
+		this.decimalPlaces = decimalPlaces;
+		this.isSimple = simple;
+	}
+
+	public UnitDisplay(Unit unit, double value, boolean useSymbol, boolean simple) {
+		this(unit, value, useSymbol, 2, simple);
+	}
+
+	public UnitDisplay(Unit unit, double value, int decimalPlaces, boolean simple) {
+		this(unit, value, false, decimalPlaces, simple);
+	}
+
+	public UnitDisplay(Unit unit, double value, boolean useSymbol, int decimalPlaces) {
+		this(unit, value, useSymbol, decimalPlaces, false);
+	}
+
+	public UnitDisplay(Unit unit, double value, int decimalPlaces) {
+		this(unit, value, false, decimalPlaces, false);
+	}
+
+	public UnitDisplay(Unit unit, double value, boolean simple) {
+		this(unit, value, false, 2, simple);
 	}
 
 	public UnitDisplay(Unit unit, double value) {
-		this(unit, value, false);
-	}
-
-	@Deprecated
-	public UnitDisplay(double value, Unit unit) {
-		this(unit, value);
+		this(unit, value, false, 2, false);
 	}
 
 	/**
 	 * Rounds a number to a specific number place places
+	 *
 	 * @param d - the number
 	 * @return The rounded number
 	 */
 	public static double roundDecimals(double d, int decimalPlaces) {
-		int j = (int) (d * Math.pow(10, decimalPlaces));
+		long j = Math.round(d * Math.pow(10, decimalPlaces));
 		return j / Math.pow(10, decimalPlaces);
 	}
 
@@ -74,13 +94,15 @@ public class UnitDisplay {
 	}
 
 	public UnitDisplay multiply(double value) {
-		this.value *= value;
-		return this;
+		return new UnitDisplay(unit, value * this.value);
 	}
 
 	public UnitDisplay simple() {
-		isSimple = true;
-		return this;
+		return (isSimple ? this : new UnitDisplay(unit, value, true));
+	}
+
+	public UnitDisplay notSimple() {
+		return (!isSimple ? this : new UnitDisplay(unit, value, false));
 	}
 
 	public UnitDisplay symbol() {
@@ -88,19 +110,18 @@ public class UnitDisplay {
 	}
 
 	public UnitDisplay symbol(boolean useSymbol) {
-		this.useSymbol = useSymbol;
-		return this;
+		return (this.useSymbol ^ useSymbol ? new UnitDisplay(unit, value, isSimple, decimalPlaces, useSymbol) : this);
 	}
 
 	public UnitDisplay decimal(int decimalPlaces) {
-		this.decimalPlaces = decimalPlaces;
-		return this;
+		return (this.decimalPlaces == decimalPlaces ? this : new UnitDisplay(unit, value, isSimple, decimalPlaces, useSymbol));
 	}
 
 	@Override
 	public String toString() {
 		String unitName = unit.name;
 		String prefix = "";
+		double value = this.value;
 
 		if (isSimple) {
 			if (value > 1) {
@@ -132,17 +153,17 @@ public class UnitDisplay {
 		if (value == 0) {
 			return value + " " + unitName;
 		} else {
-			for (int i = 0; i < UnitPrefix.unitPrefixes.size(); i++) {
-				UnitPrefix lowerMeasure = UnitPrefix.unitPrefixes.get(i);
+			for (int i = 0; i < UnitPrefix.UNIT_PREFIXES.size(); i++) {
+				UnitPrefix lowerMeasure = UnitPrefix.UNIT_PREFIXES.get(i);
 
 				if (lowerMeasure.isBellow(value) && i == 0) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
 				}
-				if (i + 1 >= UnitPrefix.unitPrefixes.size()) {
+				if (i + 1 >= UnitPrefix.UNIT_PREFIXES.size()) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
 				}
 
-				UnitPrefix upperMeasure = UnitPrefix.unitPrefixes.get(i + 1);
+				UnitPrefix upperMeasure = UnitPrefix.UNIT_PREFIXES.get(i + 1);
 
 				if ((lowerMeasure.isAbove(value) && upperMeasure.isBellow(value)) || lowerMeasure.value == value) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
@@ -171,8 +192,11 @@ public class UnitDisplay {
 		public static final Unit LITER = new Unit("nova:liter", "Liter", "L");
 		public static final Unit NEWTON_METER = new Unit("nova:newton_meter", "Newton Meter", "Nm");
 
+		/**
+		 * Redstone Flux, the default energy unit in Minecraft Forge since 1.10-ish.
+		 */
 		public static final Unit REDFLUX = new Unit("forge:redstone_flux", "Redstone-Flux", "RF").setPlural("Redstone-Flux");
-		public static final Unit MINECRAFT_JOULES = new Unit("buildcraft:minecraft_joule", "Minecraft-Joule", "McJ"); // MJ is confusing
+		public static final Unit MINECRAFT_JOULES = new Unit("buildcraft:minecraft_joule", "Minecraft-Joule", "McJ"); // MJ is confusing with Megajoules
 		public static final Unit ELECTRICAL_UNITS = new Unit("ic2:electrical_unit", "Electrical-Unit", "EU");
 
 		private final String id;
@@ -202,7 +226,7 @@ public class UnitDisplay {
 			return new StringIdentifier(id);
 		}
 
-		public static Set<Unit> getUnitsForMod(String modId) {
+		public static Set<Unit> getUnitsFromMod(String modId) {
 			return UNIT_MAP.values().stream().filter((e) -> {
 				String id = e.getID().asString();
 				if (id.contains(":")) {
@@ -242,9 +266,13 @@ public class UnitDisplay {
 	 * Metric system of measurement.
 	 */
 	public static class UnitPrefix {
-		public static final List<UnitPrefix> unitPrefixes = new LinkedList();
+		public static final List<UnitPrefix> UNIT_PREFIXES = new LinkedList();
 
-		public static final UnitPrefix MICRO = new UnitPrefix("Micro", "u", 0.000001);
+//		public static final UnitPrefix ATTO = new UnitPrefix("Atto", "a", 0.000000000000001);
+//		public static final UnitPrefix FEMTO = new UnitPrefix("Femto", "p", 0.000000000000001);
+//		public static final UnitPrefix PICO = new UnitPrefix("Pico", "p", 0.000000000001);
+//		public static final UnitPrefix NANO = new UnitPrefix("Nano", "n", 0.000000001);
+		public static final UnitPrefix MICRO = new UnitPrefix("Micro", "μ", 0.000001);
 		public static final UnitPrefix MILLI = new UnitPrefix("Milli", "m", 0.001);
 		public static final UnitPrefix BASE = new UnitPrefix("", "", 1);
 		public static final UnitPrefix KILO = new UnitPrefix("Kilo", "k", 1000);
@@ -272,7 +300,7 @@ public class UnitDisplay {
 			this.name = name;
 			this.symbol = symbol;
 			this.value = value;
-			unitPrefixes.add(this);
+			UNIT_PREFIXES.add(this);
 		}
 
 		public String getName(boolean getShort) {

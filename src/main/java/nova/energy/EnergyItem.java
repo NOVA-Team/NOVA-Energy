@@ -24,21 +24,24 @@ package nova.energy;
  * An interface for items that store energy in joules.
  */
 public interface EnergyItem {
+
 	/**
 	 * Adds energy to an item. Returns the quantity of energy that was accepted. This should always
 	 * return 0 if the item cannot be externally charged.
-	 * @param energy Maximum amount of energy to be sent into the item.
+	 *
+	 * @param energy Maximum amount of energy to be sent into the item (in Joules).
 	 * @param doRecharge If false, the charge will only be simulated.
-	 * @return Amount of energy that was accepted by the item.
+	 * @return Amount of energy that was accepted by the item (in Joules).
 	 */
 	public double recharge(double energy, boolean doRecharge);
 
 	/**
 	 * Removes energy from an item. Returns the quantity of energy that was removed. This should
 	 * always return 0 if the item cannot be externally discharged.
-	 * @param energy Maximum amount of energy to be removed from the item.
+	 *
+	 * @param energy Maximum amount of energy to be removed from the item (in Joules).
 	 * @param doDischarge If false, the discharge will only be simulated.
-	 * @return Amount of energy that was removed from the item.
+	 * @return Amount of energy that was removed from the item (in Joules).
 	 */
 	public double discharge(double energy, boolean doDischarge);
 
@@ -49,7 +52,7 @@ public interface EnergyItem {
 
 	/**
 	 * Sets the amount of energy in the ItemStack.
-	 * @param energy - Amount of electrical energy.
+	 * @param energy - Amount of electrical energy (in Joules).
 	 */
 	public void setEnergy(double energy);
 
@@ -57,4 +60,14 @@ public interface EnergyItem {
 	 * Get the max amount of energy that can be stored in the item.
 	 */
 	public double getEnergyCapacity();
+
+	/**
+	 * @return Whether or not this item can be externally recharged.
+	 */
+	public boolean canRecharge();
+
+	/**
+	 * @return Whether or not this item can be externally discharged.
+	 */
+	public boolean canDischarge();
 }

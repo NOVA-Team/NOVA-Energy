@@ -113,10 +113,13 @@ public class UnitConversion {
 	}
 
 	static {
+		registerConversion(Unit.ELECTRICAL_UNITS, Unit.JOULE, 40d/1d);
+		registerConversion(Unit.REDFLUX, Unit.JOULE, 24/5d);
+		registerConversion(Unit.MINECRAFT_JOULES, Unit.JOULE, 40d/3d/1d);
+
+		 // This should also happen automatically
 		registerConversion(Unit.ELECTRICAL_UNITS, Unit.REDFLUX, 3d/25d);
 		registerConversion(Unit.ELECTRICAL_UNITS, Unit.MINECRAFT_JOULES, 3d/1d);
-		registerConversion(Unit.REDFLUX, Unit.MINECRAFT_JOULES, 25d/1d); // This should happen automatically
-
-		registerConversion(Unit.ELECTRICAL_UNITS, Unit.JOULE, 40d/1d);
+		registerConversion(Unit.REDFLUX, Unit.MINECRAFT_JOULES, 25d/1d);
 	}
 }
