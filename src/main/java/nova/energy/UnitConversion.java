@@ -66,6 +66,12 @@ public class UnitConversion {
 	public double ratio() {
 		return ratio;
 	}
+
+	/**
+	 * Get the {@link UnitConversion} for the opposite direction.
+	 *
+	 * @return The {@link UnitConversion} for the opposite direction.
+	 */
 	public UnitConversion reverse() {
 		return reverse;
 	}

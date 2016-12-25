@@ -27,13 +27,16 @@ import nova.core.retention.Store;
  *
  * @author ExE Boss
  */
-public class EnergyStorage extends Component implements EnergyItem, Storable {
+public class EnergyStorage extends Component implements IEnergyStorage, Storable {
 
 	@Store
 	protected double energy;
 	protected double maxEnergy;
 	protected double maxRecharge;
 	protected double maxDischarge;
+
+	protected EnergyStorage() {
+	}
 
 	public EnergyStorage(double maxEnergy) {
 		this(maxEnergy, maxEnergy, maxEnergy);
@@ -47,6 +50,13 @@ public class EnergyStorage extends Component implements EnergyItem, Storable {
 		this.maxEnergy = maxEnergy;
 		this.maxRecharge = Math.min(0, Math.max(maxRecharge, maxEnergy));
 		this.maxDischarge = Math.min(0, Math.max(maxDischarge, maxEnergy));
+	}
+
+	public EnergyStorage(double energy, double maxEnergy, double maxRecharge, double maxDischarge) {
+		this.energy = energy;
+		this.maxEnergy = maxEnergy;
+		this.maxRecharge = maxRecharge;
+		this.maxDischarge = maxDischarge;
 	}
 
 	@Override

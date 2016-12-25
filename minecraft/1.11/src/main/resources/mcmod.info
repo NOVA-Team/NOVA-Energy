@@ -1,0 +1,21 @@
+{
+  "modListVersion": 2,
+  "modList": [{
+    "modid": "novaenergy",
+    "name": "NOVA Energy",
+    "description": "The Energy component of NOVA.",
+    "version": "0.0.1",
+    "mcversion": "1.11",
+    "url": "https://novaapi.net/",
+    "updateUrl": "",
+    "authorList": [ "calclavia", "RX14", "AEnterprise", "magik6k", "Shadowfacts" ],
+    "credits": "Created by the NOVA Team.\nPorted to Minecraft 1.11 by: ExE Boss.",
+    "logoFile": "",
+    "screenshots": [],
+    "parent": "",
+    "requiredMods": [],
+    "dependencies": [],
+    "dependants": [],
+    "useDependencyInformation": true
+  }]
+}

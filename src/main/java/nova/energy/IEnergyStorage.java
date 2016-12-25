@@ -23,7 +23,7 @@ package nova.energy;
 /**
  * An interface for items that store energy in joules.
  */
-public interface EnergyItem {
+public interface IEnergyStorage {
 
 	/**
 	 * Adds energy to an item. Returns the quantity of energy that was accepted. This should always
