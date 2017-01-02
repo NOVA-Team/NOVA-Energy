@@ -24,10 +24,11 @@ import nova.core.retention.Storable;
 import nova.core.retention.Store;
 
 /**
+ * A component for items and blocks that store energy in joules.
  *
  * @author ExE Boss
  */
-public class EnergyStorage extends Component implements IEnergyStorage, Storable {
+public class EnergyStorage extends Component implements Storable {
 
 	@Store
 	protected double energy;
@@ -59,7 +60,14 @@ public class EnergyStorage extends Component implements IEnergyStorage, Storable
 		this.maxDischarge = maxDischarge;
 	}
 
-	@Override
+	/**
+	 * Adds energy to an item. Returns the quantity of energy that was accepted. This should always
+	 * return 0 if the item cannot be externally charged.
+	 *
+	 * @param energy Maximum amount of energy to be sent into the item (in Joules).
+	 * @param doRecharge If false, the charge will only be simulated.
+	 * @return Amount of energy that was accepted by the item (in Joules).
+	 */
 	public double recharge(double energy, boolean doRecharge) {
 		if (!canRecharge()) return 0;
 
@@ -69,7 +77,14 @@ public class EnergyStorage extends Component implements IEnergyStorage, Storable
 		return energy;
 	}
 
-	@Override
+	/**
+	 * Removes energy from an item. Returns the quantity of energy that was removed. This should
+	 * always return 0 if the item cannot be externally discharged.
+	 *
+	 * @param energy Maximum amount of energy to be removed from the item (in Joules).
+	 * @param doDischarge If false, the discharge will only be simulated.
+	 * @return Amount of energy that was removed from the item (in Joules).
+	 */
 	public double discharge(double energy, boolean doDischarge) {
 		if (!canRecharge()) return 0;
 
@@ -79,27 +94,38 @@ public class EnergyStorage extends Component implements IEnergyStorage, Storable
 		return energy;
 	}
 
-	@Override
+	/**
+	 * Get the amount of energy currently stored in the item.
+	 */
 	public double getEnergy() {
 		return this.energy;
 	}
 
-	@Override
+	/**
+	 * Sets the amount of energy in the ItemStack.
+	 * @param energy - Amount of electrical energy (in Joules).
+	 */
 	public void setEnergy(double energy) {
 		this.energy = Math.min(0, Math.max(energy, maxEnergy));
 	}
 
-	@Override
+	/**
+	 * Get the max amount of energy that can be stored in the item.
+	 */
 	public double getEnergyCapacity() {
 		return maxEnergy;
 	}
 
-	@Override
+	/**
+	 * @return Whether or not this item can be externally recharged.
+	 */
 	public boolean canRecharge() {
 		return maxRecharge > 0;
 	}
 
-	@Override
+	/**
+	 * @return Whether or not this item can be externally discharged.
+	 */
 	public boolean canDischarge() {
 		return maxDischarge > 0;
 	}

@@ -20,13 +20,14 @@
 package nova.energy.wrapper.mc.forge.v1_11;
 
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import nova.core.loader.Loadable;
 import nova.core.wrapper.mc.forge.v1_11.launcher.NovaMinecraft;
+import nova.core.wrapper.mc.forge.v1_11.wrapper.block.backward.BWBlockComponentHandler;
 import nova.core.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileLoader;
+import nova.core.wrapper.mc.forge.v1_11.wrapper.item.backward.BWItemComponentHandler;
+import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.backward.BWEnergyBlockComponentHandler;
 import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergyLoader;
+import nova.energy.wrapper.mc.forge.v1_11.wrapper.item.backward.BWEnergyItemComponentHandler;
 
 /**
  *
@@ -46,5 +47,7 @@ public class NovaMinecraftEnergy implements Loadable {
 	@Override
 	public void preInit() {
 		FWTileLoader.registerTileLoader(new FWTileEnergyLoader());
+		BWBlockComponentHandler.register(new BWEnergyBlockComponentHandler());
+		BWItemComponentHandler.register(new BWEnergyItemComponentHandler());
 	}
 }
