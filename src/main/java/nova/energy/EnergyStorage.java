@@ -54,8 +54,8 @@ public class EnergyStorage extends Component implements Storable {
 	}
 
 	public EnergyStorage(double energy, double maxEnergy, double maxRecharge, double maxDischarge) {
-		this.energy = energy;
 		this.maxEnergy = maxEnergy;
+		this.setEnergy(energy);
 		this.maxRecharge = maxRecharge;
 		this.maxDischarge = maxDischarge;
 	}
