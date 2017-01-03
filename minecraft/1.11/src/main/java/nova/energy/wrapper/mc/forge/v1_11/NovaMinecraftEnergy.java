@@ -19,35 +19,65 @@
  */
 package nova.energy.wrapper.mc.forge.v1_11;
 
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.energy.IEnergyStorage;
+import nova.core.component.Updater;
+import nova.core.event.bus.GlobalEvents;
 import nova.core.loader.Loadable;
-import nova.core.wrapper.mc.forge.v1_11.launcher.NovaMinecraft;
-import nova.core.wrapper.mc.forge.v1_11.wrapper.block.backward.BWBlockComponentHandler;
-import nova.core.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileLoader;
-import nova.core.wrapper.mc.forge.v1_11.wrapper.item.backward.BWItemComponentHandler;
-import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.backward.BWEnergyBlockComponentHandler;
-import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergyLoader;
-import nova.energy.wrapper.mc.forge.v1_11.wrapper.item.backward.BWEnergyItemComponentHandler;
+import nova.core.loader.Mod;
+import nova.core.wrapper.mc.forge.v1_11.asm.lib.ComponentInjector;
+import nova.core.wrapper.mc.forge.v1_11.util.WrapperEvent;
+import nova.energy.EnergyStorage;
+import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergy;
+import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergyUpdater;
+import nova.energy.wrapper.mc.forge.v1_11.wrapper.energy.backward.BWEnergyStorage;
 
 /**
  *
  * @author ExE Boss
  */
-@Mod(modid = NovaMinecraftEnergy.id, name = NovaMinecraftEnergy.name, version = NovaMinecraftEnergy.version, acceptableRemoteVersions = "*")
+@Mod(id = NovaMinecraftEnergy.id, name = NovaMinecraftEnergy.name, version = NovaMinecraftEnergy.version, novaVersion = "0.1.0")
 public class NovaMinecraftEnergy implements Loadable {
 
 	public static final String version = "0.0.1";
 	public static final String id = "novaenergy";
 	public static final String name = "NOVA Energy";
 
-	public NovaMinecraftEnergy() {
-		NovaMinecraft.registerNovaWrapper(this);
+	private static ComponentInjector<FWTileEnergy> injector = new ComponentInjector<>(FWTileEnergy.class);
+	private static ComponentInjector<FWTileEnergyUpdater> updaterInjector = new ComponentInjector<>(FWTileEnergyUpdater.class);
+
+	private final GlobalEvents events;
+
+	public NovaMinecraftEnergy(GlobalEvents events) {
+		this.events = events;
 	}
 
 	@Override
 	public void preInit() {
-		FWTileLoader.registerTileLoader(new FWTileEnergyLoader());
-		BWBlockComponentHandler.register(new BWEnergyBlockComponentHandler());
-		BWItemComponentHandler.register(new BWEnergyItemComponentHandler());
+		events.on(WrapperEvent.BWBlockCreate.class).bind(evt -> {
+			if (evt.novaBlock.getTileEntity() instanceof IEnergyStorage)
+				evt.novaBlock.components.add(new BWEnergyStorage((IEnergyStorage) evt.novaBlock.getTileEntity()));
+		});
+		events.on(WrapperEvent.BWItemCreate.class).bind(evt -> {
+			if (evt.mcItem instanceof IEnergyStorage)
+				evt.novaItem.components.add(new BWEnergyStorage((IEnergyStorage) evt.mcItem));
+		});
+		events.on(WrapperEvent.FWTileLoad.class).bind(evt -> {
+			if (!evt.block.components.has(EnergyStorage.class)) return;
+			if (evt.hasResult()) return;
+
+			FWTileEnergy tile;
+			if (evt.data.isPresent()) {
+				tile = (evt.block instanceof Updater) ?
+						updaterInjector.inject(evt.block, new Class[0], new Object[0]) :
+						injector.inject(evt.block, new Class[0], new Object[0]);
+				tile.setBlock(evt.block);
+			} else {
+				tile = (evt.block instanceof Updater) ?
+						updaterInjector.inject(evt.block, new Class[] { String.class }, new Object[] { evt.block.getID().asString() }) :
+						injector.inject(evt.block, new Class[] { String.class }, new Object[] { evt.block.getID().asString() });
+				tile.setBlock(evt.block);
+			}
+			evt.setResult(tile);
+		});
 	}
 }
