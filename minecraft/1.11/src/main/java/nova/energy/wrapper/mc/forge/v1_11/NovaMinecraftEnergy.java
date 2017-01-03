@@ -32,6 +32,7 @@ import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergyUpda
 import nova.energy.wrapper.mc.forge.v1_11.wrapper.energy.backward.BWEnergyStorage;
 
 /**
+ * Compatibility with Forge Energy, which has been in Minecraft Forge since Minecraft 1.10.2.
  *
  * @author ExE Boss
  */

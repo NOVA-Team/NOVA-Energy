@@ -268,19 +268,21 @@ public class UnitDisplay {
 	public static class UnitPrefix {
 		public static final List<UnitPrefix> UNIT_PREFIXES = new LinkedList();
 
-//		public static final UnitPrefix ATTO = new UnitPrefix("Atto", "a", 0.000000000000001);
+//		public static final UnitPrefix YOCTO = new UnitPrefix("Yocto", "y", 0.000000000000000000000001);
+//		public static final UnitPrefix ZEPTO = new UnitPrefix("Zepto", "z", 0.000000000000000000001);
+//		public static final UnitPrefix ATTO  = new UnitPrefix("Atto",  "a", 0.000000000000000001);
 //		public static final UnitPrefix FEMTO = new UnitPrefix("Femto", "p", 0.000000000000001);
-//		public static final UnitPrefix PICO = new UnitPrefix("Pico", "p", 0.000000000001);
-//		public static final UnitPrefix NANO = new UnitPrefix("Nano", "n", 0.000000001);
+//		public static final UnitPrefix PICO  = new UnitPrefix("Pico",  "p", 0.000000000001);
+//		public static final UnitPrefix NANO  = new UnitPrefix("Nano",  "n", 0.000000001);
 		public static final UnitPrefix MICRO = new UnitPrefix("Micro", "μ", 0.000001);
 		public static final UnitPrefix MILLI = new UnitPrefix("Milli", "m", 0.001);
-		public static final UnitPrefix BASE = new UnitPrefix("", "", 1);
-		public static final UnitPrefix KILO = new UnitPrefix("Kilo", "k", 1000);
-		public static final UnitPrefix MEGA = new UnitPrefix("Mega", "M", 1000000);
-		public static final UnitPrefix GIGA = new UnitPrefix("Giga", "G", 1000000000);
-		public static final UnitPrefix TERA = new UnitPrefix("Tera", "T", 1000000000000d);
-		public static final UnitPrefix PETA = new UnitPrefix("Peta", "P", 1000000000000000d);
-		public static final UnitPrefix EXA = new UnitPrefix("Exa", "E", 1000000000000000000d);
+		public static final UnitPrefix BASE  = new UnitPrefix("",      "",  1);
+		public static final UnitPrefix KILO  = new UnitPrefix("Kilo",  "k", 1000);
+		public static final UnitPrefix MEGA  = new UnitPrefix("Mega",  "M", 1000000);
+		public static final UnitPrefix GIGA  = new UnitPrefix("Giga",  "G", 1000000000);
+		public static final UnitPrefix TERA  = new UnitPrefix("Tera",  "T", 1000000000000d);
+		public static final UnitPrefix PETA  = new UnitPrefix("Peta",  "P", 1000000000000000d);
+		public static final UnitPrefix EXA   = new UnitPrefix("Exa",   "E", 1000000000000000000d);
 		public static final UnitPrefix ZETTA = new UnitPrefix("Zetta", "Z", 1000000000000000000000d);
 		public static final UnitPrefix YOTTA = new UnitPrefix("Yotta", "Y", 1000000000000000000000000d);
 		/**
