@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with NOVA.  If not, see <http://www.gnu.org/licenses/>.
  */
-package nova.energy.wrapper.mc.forge.v1_11;
+package nova.energy.wrapper.mc.forge.v1_11.launch;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.energy.CapabilityEnergy;
@@ -35,16 +35,16 @@ import nova.energy.wrapper.mc.forge.v1_11.wrapper.energy.forward.FWEnergyStorage
  *
  * @author ExE Boss
  */
-@Mod(id = NovaMinecraftEnergy.id, name = NovaMinecraftEnergy.name, version = NovaMinecraftEnergy.version, novaVersion = "0.1.0")
-public class NovaMinecraftEnergy implements Loadable {
+@Mod(id = NovaEnergyWrapper.id, name = NovaEnergyWrapper.name, version = NovaEnergyWrapper.version, novaVersion = "0.1.0")
+public class NovaEnergyWrapper implements Loadable {
 
 	public static final String version = "0.0.1";
-	public static final String id = "novaenergy";
+	public static final String id = "nova-energy-wrapper";
 	public static final String name = "NOVA Energy";
 
 	private final GlobalEvents events;
 
-	public NovaMinecraftEnergy(GlobalEvents events) {
+	public NovaEnergyWrapper(GlobalEvents events) {
 		this.events = events;
 	}
 
