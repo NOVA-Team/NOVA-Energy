@@ -19,17 +19,16 @@
  */
 package nova.energy.wrapper.mc.forge.v1_11;
 
+import net.minecraft.util.EnumFacing;
+import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
-import nova.core.component.Updater;
 import nova.core.event.bus.GlobalEvents;
 import nova.core.loader.Loadable;
 import nova.core.loader.Mod;
-import nova.core.wrapper.mc.forge.v1_11.asm.lib.ComponentInjector;
 import nova.core.wrapper.mc.forge.v1_11.util.WrapperEvent;
 import nova.energy.EnergyStorage;
-import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergy;
-import nova.energy.wrapper.mc.forge.v1_11.wrapper.block.forward.FWTileEnergyUpdater;
 import nova.energy.wrapper.mc.forge.v1_11.wrapper.energy.backward.BWEnergyStorage;
+import nova.energy.wrapper.mc.forge.v1_11.wrapper.energy.forward.FWEnergyStorage;
 
 /**
  * Compatibility with Forge Energy, which has been in Minecraft Forge since Minecraft 1.10.2.
@@ -43,9 +42,6 @@ public class NovaMinecraftEnergy implements Loadable {
 	public static final String id = "novaenergy";
 	public static final String name = "NOVA Energy";
 
-	private static ComponentInjector<FWTileEnergy> injector = new ComponentInjector<>(FWTileEnergy.class);
-	private static ComponentInjector<FWTileEnergyUpdater> updaterInjector = new ComponentInjector<>(FWTileEnergyUpdater.class);
-
 	private final GlobalEvents events;
 
 	public NovaMinecraftEnergy(GlobalEvents events) {
@@ -55,30 +51,46 @@ public class NovaMinecraftEnergy implements Loadable {
 	@Override
 	public void preInit() {
 		events.on(WrapperEvent.BWBlockCreate.class).bind(evt -> {
-			if (evt.novaBlock.getTileEntity() instanceof IEnergyStorage)
-				evt.novaBlock.components.add(new BWEnergyStorage((IEnergyStorage) evt.novaBlock.getTileEntity()));
-		});
-		events.on(WrapperEvent.BWItemCreate.class).bind(evt -> {
-			if (evt.mcItem instanceof IEnergyStorage)
-				evt.novaItem.components.add(new BWEnergyStorage((IEnergyStorage) evt.mcItem));
-		});
-		events.on(WrapperEvent.FWTileLoad.class).bind(evt -> {
-			if (!evt.block.components.has(EnergyStorage.class)) return;
-			if (evt.hasResult()) return;
+			IEnergyStorage energyCapability = null;
+			for (EnumFacing facing : EnumFacing.values()) {
+				if (!evt.novaBlock.getTileEntity().hasCapability(CapabilityEnergy.ENERGY, facing))
+					continue;
 
-			FWTileEnergy tile;
-			if (evt.data.isPresent()) {
-				tile = (evt.block instanceof Updater) ?
-						updaterInjector.inject(evt.block, new Class[0], new Object[0]) :
-						injector.inject(evt.block, new Class[0], new Object[0]);
-				tile.setBlock(evt.block);
-			} else {
-				tile = (evt.block instanceof Updater) ?
-						updaterInjector.inject(evt.block, new Class[] { String.class }, new Object[] { evt.block.getID().asString() }) :
-						injector.inject(evt.block, new Class[] { String.class }, new Object[] { evt.block.getID().asString() });
-				tile.setBlock(evt.block);
+				energyCapability = evt.novaBlock.getTileEntity().getCapability(CapabilityEnergy.ENERGY, facing);
+				if (energyCapability != null)
+					break; // NOVA-Energy is Unsided
 			}
-			evt.setResult(tile);
+
+			if (energyCapability == null && evt.novaBlock.getTileEntity().hasCapability(CapabilityEnergy.ENERGY, null))
+				energyCapability = evt.novaBlock.getTileEntity().getCapability(CapabilityEnergy.ENERGY, null);
+
+			if (energyCapability != null)
+				evt.novaBlock.components.add(new BWEnergyStorage(energyCapability));
+		});
+
+		events.on(WrapperEvent.BWItemCreate.class).bind(evt -> {
+			if (evt.itemStack.isPresent() && evt.itemStack.get().hasCapability(CapabilityEnergy.ENERGY, null))
+				evt.novaItem.components.add(new BWEnergyStorage(evt.itemStack.get().getCapability(CapabilityEnergy.ENERGY, null)));
+		});
+
+		events.on(WrapperEvent.BWEntityCreate.class).bind(evt -> {
+			if (evt.mcEntity.hasCapability(CapabilityEnergy.ENERGY, null))
+				evt.novaEntity.components.add(new BWEnergyStorage(evt.mcEntity.getCapability(CapabilityEnergy.ENERGY, null)));
+		});
+
+		events.on(WrapperEvent.FWTileCreate.class).bind(evt -> {
+			if (evt.novaBlock.components.has(EnergyStorage.class)) // Components are unsided
+				evt.tileEntity.addCapability(CapabilityEnergy.ENERGY, new FWEnergyStorage(evt.novaBlock.components.get(EnergyStorage.class)), null);
+		});
+
+		events.on(WrapperEvent.FWItemInitCapabilities.class).bind(evt -> {
+			if (evt.novaItem.components.has(EnergyStorage.class)) // Components are unsided
+				evt.capabilityProvider.addCapability(CapabilityEnergy.ENERGY, new FWEnergyStorage(evt.novaItem.components.get(EnergyStorage.class)), null);
+		});
+
+		events.on(WrapperEvent.FWEntityCreate.class).bind(evt -> {
+			if (evt.novaBlock.components.has(EnergyStorage.class)) // Components are unsided
+				evt.mcEntity.addCapability(CapabilityEnergy.ENERGY, new FWEnergyStorage(evt.novaBlock.components.get(EnergyStorage.class)), null);
 		});
 	}
 }
