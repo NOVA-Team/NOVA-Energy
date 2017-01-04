@@ -51,6 +51,9 @@ public class NovaMinecraftEnergy implements Loadable {
 	@Override
 	public void preInit() {
 		events.on(WrapperEvent.BWBlockCreate.class).bind(evt -> {
+			if (evt.novaBlock.getTileEntity() == null)
+				return;
+
 			IEnergyStorage energyCapability = null;
 			for (EnumFacing facing : EnumFacing.values()) {
 				if (!evt.novaBlock.getTileEntity().hasCapability(CapabilityEnergy.ENERGY, facing))
@@ -79,6 +82,9 @@ public class NovaMinecraftEnergy implements Loadable {
 		});
 
 		events.on(WrapperEvent.FWTileCreate.class).bind(evt -> {
+			if (evt.tileEntity == null)
+				return;
+
 			if (evt.novaBlock.components.has(EnergyStorage.class)) // Components are unsided
 				evt.tileEntity.addCapability(CapabilityEnergy.ENERGY, new FWEnergyStorage(evt.novaBlock.components.get(EnergyStorage.class)), null);
 		});
