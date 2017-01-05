@@ -205,7 +205,7 @@ public class UnitDisplay {
 		private String plural = null;
 
 		private Unit(String id, String name, String symbol) {
-			this.id = Identifiable.addPrefix(id, false);
+			this.id = id;
 			this.name = name;
 			this.symbol = symbol;
 
@@ -243,21 +243,17 @@ public class UnitDisplay {
 
 		public static Unit getOrCreateUnit(String id, String name, String unit) {
 			StringIdentifier idRaw = new StringIdentifier(id);
-			StringIdentifier idNamespaced = new StringIdentifier(Identifiable.addPrefix(id, false));
-			if (UNIT_MAP.containsKey(idNamespaced)) return UNIT_MAP.get(idNamespaced);
 			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
 
-			Unit unitObj = new Unit(idNamespaced.asString(), name, unit);
+			Unit unitObj = new Unit(idRaw.asString(), name, unit);
 			return unitObj;
 		}
 
 		public static Unit getOrCreateUnit(String id, String name, String unit, String plural) {
 			StringIdentifier idRaw = new StringIdentifier(id);
-			StringIdentifier idNamespaced = new StringIdentifier(Identifiable.addPrefix(id, false));
-			if (UNIT_MAP.containsKey(idNamespaced)) return UNIT_MAP.get(idNamespaced);
 			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
 
-			Unit unitObj = new Unit(idNamespaced.asString(), name, unit);
+			Unit unitObj = new Unit(idRaw.asString(), name, unit);
 			return unitObj.setPlural(plural);
 		}
 	}
