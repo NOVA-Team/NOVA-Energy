@@ -20,20 +20,6 @@
 
 package nova.energy;
 
-import nova.core.loader.Mod;
-import nova.core.util.id.Identifiable;
-import nova.core.util.id.Identifier;
-import nova.core.util.id.StringIdentifier;
-import nova.internal.core.launch.ModLoader;
-
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 /**
  * An easy way to display information on electricity for the client.
  *
@@ -153,17 +139,17 @@ public class UnitDisplay {
 		if (value == 0) {
 			return value + " " + unitName;
 		} else {
-			for (int i = 0; i < UnitPrefix.UNIT_PREFIXES.size(); i++) {
-				UnitPrefix lowerMeasure = UnitPrefix.UNIT_PREFIXES.get(i);
+			for (int i = 0; i < Unit.Prefix.getPrefixes().size(); i++) {
+				Unit.Prefix lowerMeasure = Unit.Prefix.getPrefixes().get(i);
 
 				if (lowerMeasure.isBellow(value) && i == 0) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
 				}
-				if (i + 1 >= UnitPrefix.UNIT_PREFIXES.size()) {
+				if (i + 1 >= Unit.Prefix.getPrefixes().size()) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
 				}
 
-				UnitPrefix upperMeasure = UnitPrefix.UNIT_PREFIXES.get(i + 1);
+				Unit.Prefix upperMeasure = Unit.Prefix.getPrefixes().get(i + 1);
 
 				if ((lowerMeasure.isAbove(value) && upperMeasure.isBellow(value)) || lowerMeasure.value == value) {
 					return prefix + roundDecimals(lowerMeasure.process(value), decimalPlaces) + " " + lowerMeasure.getName(useSymbol) + unitName;
@@ -172,162 +158,5 @@ public class UnitDisplay {
 		}
 
 		return prefix + roundDecimals(value, decimalPlaces) + " " + unitName;
-	}
-
-	/**
-	 * Universal Electricity's units are in KILOJOULES, KILOWATTS and KILOVOLTS. Try to make your
-	 * energy ratio as close to real life as possible.
-	 */
-	public static class Unit implements Identifiable {
-		private static final Map<Identifier, Unit> UNIT_MAP = new HashMap<>();
-
-		public static final Unit AMPERE = new Unit("nova:ampere", "Amp", "I");
-		public static final Unit AMP_HOUR = new Unit("nova:amp_hour", "Amp Hour", "Ah");
-		public static final Unit VOLTAGE = new Unit("nova:voltage", "Volt", "V");
-		public static final Unit WATT = new Unit("nova:watt", "Watt", "W");
-		public static final Unit WATT_HOUR = new Unit("nova:watt_hour", "Watt Hour", "Wh");
-		public static final Unit RESISTANCE = new Unit("nova:resistance", "Ohm", "R");
-		public static final Unit CONDUCTANCE = new Unit("nova:conductance", "Siemen", "S");
-		public static final Unit JOULE = new Unit("nova:joule", "Joule", "J");
-		public static final Unit LITER = new Unit("nova:liter", "Liter", "L");
-		public static final Unit NEWTON_METER = new Unit("nova:newton_meter", "Newton Meter", "Nm");
-
-		/**
-		 * Redstone Flux, the default energy unit in Minecraft Forge since 1.10-ish.
-		 */
-		public static final Unit REDFLUX = new Unit("forge:redstone_flux", "Redstone-Flux", "RF").setPlural("Redstone-Flux");
-		public static final Unit MINECRAFT_JOULES = new Unit("buildcraft:minecraft_joule", "Minecraft-Joule", "McJ"); // MJ is confusing with Megajoules
-		public static final Unit ELECTRICAL_UNITS = new Unit("ic2:electrical_unit", "Electrical-Unit", "EU");
-
-		private final String id;
-		public final String name;
-		public final String symbol;
-		private String plural = null;
-
-		private Unit(String id, String name, String symbol) {
-			this.id = id;
-			this.name = name;
-			this.symbol = symbol;
-
-			UNIT_MAP.put(getID(), this);
-		}
-
-		private Unit setPlural(String plural) {
-			this.plural = plural;
-			return this;
-		}
-
-		public String getPlural() {
-			return this.plural == null ? this.name + "s" : this.plural;
-		}
-
-		@Override
-		public Identifier getID() {
-			return new StringIdentifier(id);
-		}
-
-		public static Set<Unit> getUnitsFromMod(String modId) {
-			return UNIT_MAP.values().stream().filter((e) -> {
-				String id = e.getID().asString();
-				if (id.contains(":")) {
-					return id.substring(0, id.lastIndexOf(':')).startsWith(modId);
-				} else {
-					return modId == null || modId.isEmpty();
-				}
-			}).collect(Collectors.toSet());
-		}
-
-		public static Optional<Unit> getUnit(String id) {
-			return Optional.ofNullable(UNIT_MAP.get(new StringIdentifier(id)));
-		}
-
-		public static Unit getOrCreateUnit(String id, String name, String unit) {
-			StringIdentifier idRaw = new StringIdentifier(id);
-			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
-
-			Unit unitObj = new Unit(idRaw.asString(), name, unit);
-			return unitObj;
-		}
-
-		public static Unit getOrCreateUnit(String id, String name, String unit, String plural) {
-			StringIdentifier idRaw = new StringIdentifier(id);
-			if (UNIT_MAP.containsKey(idRaw)) return UNIT_MAP.get(idRaw);
-
-			Unit unitObj = new Unit(idRaw.asString(), name, unit);
-			return unitObj.setPlural(plural);
-		}
-	}
-
-	/**
-	 * Metric system of measurement.
-	 */
-	public static class UnitPrefix {
-		public static final List<UnitPrefix> UNIT_PREFIXES = new LinkedList();
-
-//		public static final UnitPrefix YOCTO = new UnitPrefix("Yocto", "y", 0.000000000000000000000001);
-//		public static final UnitPrefix ZEPTO = new UnitPrefix("Zepto", "z", 0.000000000000000000001);
-//		public static final UnitPrefix ATTO  = new UnitPrefix("Atto",  "a", 0.000000000000000001);
-//		public static final UnitPrefix FEMTO = new UnitPrefix("Femto", "p", 0.000000000000001);
-//		public static final UnitPrefix PICO  = new UnitPrefix("Pico",  "p", 0.000000000001);
-//		public static final UnitPrefix NANO  = new UnitPrefix("Nano",  "n", 0.000000001);
-		public static final UnitPrefix MICRO = new UnitPrefix("Micro", "μ", 0.000001);
-		public static final UnitPrefix MILLI = new UnitPrefix("Milli", "m", 0.001);
-		public static final UnitPrefix BASE  = new UnitPrefix("",      "",  1);
-		public static final UnitPrefix KILO  = new UnitPrefix("Kilo",  "k", 1000);
-		public static final UnitPrefix MEGA  = new UnitPrefix("Mega",  "M", 1000000);
-		public static final UnitPrefix GIGA  = new UnitPrefix("Giga",  "G", 1000000000);
-		public static final UnitPrefix TERA  = new UnitPrefix("Tera",  "T", 1000000000000d);
-		public static final UnitPrefix PETA  = new UnitPrefix("Peta",  "P", 1000000000000000d);
-		public static final UnitPrefix EXA   = new UnitPrefix("Exa",   "E", 1000000000000000000d);
-		public static final UnitPrefix ZETTA = new UnitPrefix("Zetta", "Z", 1000000000000000000000d);
-		public static final UnitPrefix YOTTA = new UnitPrefix("Yotta", "Y", 1000000000000000000000000d);
-		/**
-		 * long name for the unit
-		 */
-		public final String name;
-		/**
-		 * short unit version of the unit
-		 */
-		public final String symbol;
-		/**
-		 * Point by which a number is consider to be of this unit
-		 */
-		public final double value;
-
-		private UnitPrefix(String name, String symbol, double value) {
-			this.name = name;
-			this.symbol = symbol;
-			this.value = value;
-			UNIT_PREFIXES.add(this);
-		}
-
-		public String getName(boolean getShort) {
-			if (getShort) {
-				return symbol;
-			} else {
-				return name;
-			}
-		}
-
-		/**
-		 * Divides the value by the unit value start
-		 */
-		public double process(double value) {
-			return value / this.value;
-		}
-
-		/**
-		 * Checks if a value is above the unit value start
-		 */
-		public boolean isAbove(double value) {
-			return value > this.value;
-		}
-
-		/**
-		 * Checks if a value is lower than the unit value start
-		 */
-		public boolean isBellow(double value) {
-			return value < this.value;
-		}
 	}
 }

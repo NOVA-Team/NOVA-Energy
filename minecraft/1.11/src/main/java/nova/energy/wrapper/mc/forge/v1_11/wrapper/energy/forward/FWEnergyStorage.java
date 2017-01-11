@@ -7,8 +7,8 @@ package nova.energy.wrapper.mc.forge.v1_11.wrapper.energy.forward;
 
 import net.minecraftforge.energy.IEnergyStorage;
 import nova.energy.EnergyStorage;
+import nova.energy.Unit;
 import nova.energy.UnitConversion;
-import nova.energy.UnitDisplay;
 
 /**
  * A FWEnergyStorage is a NOVA energy capability.
@@ -17,7 +17,7 @@ import nova.energy.UnitDisplay;
  */
 public class FWEnergyStorage implements IEnergyStorage {
 
-	private static final UnitConversion RF_JOULE = UnitConversion.getConvertion(UnitDisplay.Unit.REDFLUX, UnitDisplay.Unit.JOULE).get();
+	private static final UnitConversion RF_JOULE = UnitConversion.getConvertion(Unit.REDFLUX, Unit.JOULE).get();
 	private static final UnitConversion JOULE_RF = RF_JOULE.reverse();
 
 	private final EnergyStorage energyStorage;

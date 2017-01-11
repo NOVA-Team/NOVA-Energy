@@ -20,8 +20,6 @@
 
 package nova.energy;
 
-import nova.energy.UnitDisplay.Unit;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -81,6 +79,7 @@ public class UnitConversion {
 		if (conv == null) return Optional.empty();
 		return Optional.ofNullable(conv.get(unit2));
 	}
+
 	/**
 	 *
 	 * @param unit1 The unit to convert from
@@ -94,11 +93,17 @@ public class UnitConversion {
 			throw new IllegalArgumentException("Ratio cannot be 0");
 
 		Map<Unit, UnitConversion> conv1 = CONVERSION.get(unit1);
-		if (conv1 == null) conv1 = new HashMap<>();
+		if (conv1 == null) {
+			conv1 = new HashMap<>();
+			CONVERSION.put(unit1, conv1);
+		}
 		if (conv1.containsKey(unit2)) return conv1.get(unit2);
 
 		Map<Unit, UnitConversion> conv2 = CONVERSION.get(unit2);
-		if (conv2 == null) conv2 = new HashMap<>();
+		if (conv2 == null) {
+			conv2 = new HashMap<>();
+			CONVERSION.put(unit2, conv2);
+		}
 
 		UnitConversion uc = new UnitConversion(unit1, unit2, ratio);
 

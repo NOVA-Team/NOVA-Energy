@@ -95,8 +95,8 @@ public class NovaEnergyWrapper implements Loadable {
 		});
 
 		events.on(WrapperEvent.FWEntityCreate.class).bind(evt -> {
-			if (evt.novaBlock.components.has(EnergyStorage.class)) // Components are unsided
-				evt.mcEntity.addCapability(CapabilityEnergy.ENERGY, new FWEnergyStorage(evt.novaBlock.components.get(EnergyStorage.class)), null);
+			if (evt.novaEntity.components.has(EnergyStorage.class)) // Components are unsided
+				evt.mcEntity.addCapability(CapabilityEnergy.ENERGY, new FWEnergyStorage(evt.novaEntity.components.get(EnergyStorage.class)), null);
 		});
 	}
 }
